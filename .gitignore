@@ -1,0 +1,18 @@
+# Virtual environments
+.venv
+venv
+env
+.env
+
+# Data
+**data
+**Data
+
+# Python utils
+_pychache_
+
+# Sandbox
+**sandbox**
+
+
+

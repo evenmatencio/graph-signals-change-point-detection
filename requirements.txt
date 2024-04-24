@@ -1,0 +1,9 @@
+matplotlib
+seaborn
+numpy
+pandas
+geopandas
+ruptures
+scipy
+pygsp
+networkx
