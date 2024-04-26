@@ -9,7 +9,7 @@ env
 **Data
 
 # Python utils
-_pychache_
+__pycache__
 
 # Sandbox
 **sandbox**
