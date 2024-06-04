@@ -1,5 +1,4 @@
 import numpy as np
-import networkx as nx
 
 from scipy.linalg import eigh
 from ruptures.base import BaseCost
@@ -23,7 +22,7 @@ class MyL2Cost(BaseCost):
         Performs pre-computations for per-segment approximation cost.
 
         args:
-            signal: (np.ndarray) of shape [n_samples, n_dim]
+            signal: (array) of shape [n_samples, n_dim]
         """
         self.signal = signal
         self.signal_square_cumsum =  np.concatenate([np.zeros((1, signal.shape[1])), np.cumsum(signal**2, axis=0)], axis=0)
@@ -49,7 +48,7 @@ class MyL2Cost(BaseCost):
         return np.sum(sub_square_sum - (sub_sum**2) / (end - start))  
     
 
-class GFSSL2Cost(BaseCost):
+class CostGFSSL2(BaseCost):
 
     """
     Applies the GFSS rotation to the whole signal before computing
@@ -59,9 +58,15 @@ class GFSSL2Cost(BaseCost):
     model = "gfss_l2_cost"
     min_size = 1
 
-    def __init__(self, graph, cut_sparsity) -> None:
+    def __init__(self, laplacian_mat, cut_sparsity) -> None:
+        """
+        Args:
+            laplacian_mat (array): the discrete Laplacian matrix of the graph: D - W
+            where D is the diagonal matrix diag(d_i) of the node degrees and W the adjacency matrix
+            cut_sparsity (float): frequency threshold of the GFSS spectral filter
+        """
         self.cut_sparsity = cut_sparsity
-        self.graph = graph
+        self.graph_laplacian_mat = laplacian_mat
         self.signal = None
         self.gft_square_cumsum = None
         self.gft_cumsum = None
@@ -72,11 +77,11 @@ class GFSSL2Cost(BaseCost):
         NOTE: the frequences must be in increasing order.
 
         Args:
-            freqs (np.ndarray): ordered frequences to filter.
+            freqs (array): ordered frequences to filter.
             eps (float, optional): threshold for non zero values. Defaults to 0.00001.
 
         Returns:
-            filtered_freqs (np.ndarray): the output of the filter.
+            filtered_freqs (array): the output of the filter.
         """
         nb_zeros = np.sum(freqs < eps)
         filtered_freqs = np.minimum(1, np.sqrt(self.cut_sparsity / freqs[nb_zeros:]))
@@ -91,11 +96,11 @@ class GFSSL2Cost(BaseCost):
         the ith eigenvalue in the ith column eigvect[:, i]
 
         Args:
-            signal (np.ndarray): of shape [n_samples, n_dim].
+            signal (array): of shape [n_samples, n_dim].
         """
         self.signal = signal
         # Computation of the GFSS
-        eigvals, eigvects = eigh(nx.laplacian_matrix(self.graph).toarray())
+        eigvals, eigvects = eigh(self.graph_laplacian_mat)
         filter_matrix = np.diag(self.filter(eigvals), k=0)
         gft = filter_matrix.dot(eigvects.T.dot(signal.T)).T
         # Computation of the per-segment cost utils
@@ -120,25 +125,4 @@ class GFSSL2Cost(BaseCost):
         sub_square_sum = self.gft_square_cumsum[end] - self.gft_square_cumsum[start]
         sub_sum = self.gft_cumsum[end] - self.gft_cumsum[start]
         return np.sum(sub_square_sum - (sub_sum**2) / (end  - start))  
-    
-    def sum_of_costs(self, bkps, pen):
-        """Return the total GFSS cost for the signal and the input break points.
 
-        Args:
-            bkps [list[int]]: the list of breaking points.
-            pen [float]: the penalty coefficient.
-
-        Returns:
-            float: total cost
-        """
-        # Initialization
-        my_overall_cost = -pen
-        n_samples = self.signal.shape[0]
-        if bkps[0] != 0:
-            bkps = [0] + bkps
-        if bkps[-1] != n_samples:
-            bkps = bkps + [n_samples]
-        # Cost computation
-        for i in range(len(bkps[:-1])):
-            my_overall_cost += pen + self.error(bkps[i], bkps[i+1])
-        return my_overall_cost
