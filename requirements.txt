@@ -8,3 +8,4 @@ scipy
 pygsp
 networkx
 scikit-learn
+tqdm
