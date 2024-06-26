@@ -11,6 +11,8 @@ env
 # Data
 **data
 **Data
+**images
+**Images
 
 # Python utils
 __pycache__
