@@ -109,16 +109,15 @@ def add_diagonal_white_noise(signal_rng:np.random.Generator, signal, sigma):
     white_noise = signal_rng.multivariate_normal(np.zeros(n_dims), cov_mat, size=n_samples)
     return signal + white_noise
 
-def modify_signal_to_simulate_breakdown(signal, signal_rng, n_breakdown_max):
+def modify_signal_to_simulate_breakdown(signal, signal_rng, n_breakdown, breakdown_length):
     # initialization
     n_samples = signal.shape[0]
-    n_breakdown = signal_rng.integers(1, n_breakdown_max+1)
-    # randomly pick the location and time length of the breakdowns
+    # randomly pick the location of the breakdowns
     breakdowns = {}
-    broken_node_ids = signal_rng.integers(0, signal.shape[1], size=(n_breakdown))
+    broken_node_ids = signal_rng.choice(signal.shape[1], size=n_breakdown, replace=False)
     for node_id in broken_node_ids:
-        start = int(signal_rng.integers(0, n_samples-1))
-        end = int(signal_rng.integers(start, n_samples))
+        start = int(signal_rng.integers(0, n_samples-breakdown_length))
+        end = start + breakdown_length
         signal[start:end, node_id] = 0
         breakdowns[int(node_id)] = (start, end)
     return signal, breakdowns
