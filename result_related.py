@@ -12,8 +12,12 @@ def compute_f1_score(preci, recall):
 
 def compute_and_update_metrics(true_bkps, pred_bkps, metrics_dic, prec_rec_margin):
     preci, recall = precision_recall(true_bkps, pred_bkps, prec_rec_margin)
-    f1_score = compute_f1_score(preci, recall)
     hsdrf = hausdorff(true_bkps, pred_bkps)
+    if hsdrf <= prec_rec_margin:
+        preci=1
+        if len(pred_bkps) >= len(true_bkps):
+            recall = 1
+    f1_score = compute_f1_score(preci, recall)
     metrics_dic["precision"]['raw'].append(round(preci, 4))
     metrics_dic["recall"]['raw'].append(round(recall, 4))
     metrics_dic["f1_score"]['raw'].append(round(f1_score, 4))
