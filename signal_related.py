@@ -35,9 +35,10 @@ def draw_bkps_with_gap_constraint(n_samples, bkps_gap, bkps_rng, n_bkps_max, max
     bkps.sort()
     return bkps + [n_samples]
 
-def draw_fixed_nb_bkps_with_gap_constraint(n_samples, bkps_gap, bkps_rng, max_tries=10000):
+def draw_fixed_nb_bkps_with_gap_constraint(n_samples, bkps_gap, bkps_rng, max_tries=10000, n_bkps=-1):
     # randomly pick an admissible number of bkps
-    n_bkps = bkps_rng.integers(low=n_samples // bkps_gap - 1, high= n_samples // bkps_gap)
+    if n_bkps < 0:
+        n_bkps = bkps_rng.integers(low=n_samples // bkps_gap - 1, high= n_samples // bkps_gap)
     bkps = []
     n_tries = 0
     # select admissible randomly drawn bkps
@@ -69,11 +70,11 @@ def generate_rd_signal_in_hyp(G:nx.Graph, signal_rng:np.random.Generator, hyp:se
         signal = np.concatenate([signal, sub_signal], axis=0)
     return bkps, signal.astype(np.float64)
 
-def generate_rd_signal_in_hyp_with_fixed_min_size(G:nx.Graph, signal_rng:np.random.Generator, hyp:seg_length, n_samples:int, min_size_coef:int, diag_cov_max):
+def generate_rd_signal_in_hyp_with_fixed_min_size(G:nx.Graph, signal_rng:np.random.Generator, hyp:seg_length, n_samples:int, min_size_coef:int, diag_cov_max, n_bkps=-1):
     # randomly draw a set of admissible change points
     n_dims = G.number_of_nodes()
     min_size = int(min_size_coef * get_min_size_for_hyp(n_dims=n_dims, hyp=hyp))
-    bkps = draw_fixed_nb_bkps_with_gap_constraint(n_samples=n_samples, bkps_gap=min_size, bkps_rng=signal_rng)
+    bkps = draw_fixed_nb_bkps_with_gap_constraint(n_samples=n_samples, bkps_gap=min_size, bkps_rng=signal_rng, n_bkps=n_bkps)
     # generate the signal
     _, eigvects = eigh(nx.laplacian_matrix(G).toarray())
     signal_gen_func = lambda size: generate_gaus_signal_with_cov_diag_in_basis(n_dims, size, eigvects, signal_rng, diag_cov_max)
