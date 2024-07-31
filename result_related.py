@@ -1,3 +1,5 @@
+import scipy.optimize
+
 import numpy as np
 
 from datetime import datetime
@@ -33,3 +35,15 @@ def save_metrics(metrics_per_models, stats, dir, comment=''):
     to_save["results"] = metrics_per_models
     to_save = turn_all_list_of_dict_into_str(to_save)
     create_parent_and_dump_json(dir, now + '.json', to_save, indent=4)
+
+
+def compute_assignement_cost(true_bkps, pred_bkps, metrics_dic):
+    # initialize cost matrix
+    cost_matrix = -1 * np.ones((len(true_bkps)-1, len(pred_bkps)-1))
+    for i, gt_bkp in enumerate(true_bkps[:-1]):
+        for j, pred_bkp in enumerate(pred_bkps[:-1]):
+            cost_matrix[i, j] = abs(gt_bkp - pred_bkp)
+    # find solution and compute resulting cost
+    solution_row_ind, solution_col_ind = scipy.optimize.linear_sum_assignment(cost_matrix)
+    assignement_cost = cost_matrix[solution_row_ind, solution_col_ind].mean()
+    metrics_dic['assignement_cost']['raw'].append(int(assignement_cost))
