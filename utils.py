@@ -31,6 +31,12 @@ def create_parent_and_dump_json(parent_dir, name, data, indent=None):
     with open(os.path.join(parent_dir, name), 'w+') as f:
         json.dump(data, f, indent=indent)
 
+def load_and_write_json(json_path, new_key, new_data, indent):
+    stored_data = open_json(json_path)
+    stored_data[new_key] = new_data
+    with open(json_path, 'a+') as f:
+        json.dump(stored_data, f, indent=indent)
+
 def read_data_1(graph_path: str, signal_path: str, exp_id: int):
     adj_mat = np.load(f"{graph_path}/{exp_id}_mat_adj.npy", allow_pickle=False)
     G = nx.from_numpy_array(adj_mat)
