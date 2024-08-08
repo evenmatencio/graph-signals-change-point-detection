@@ -40,7 +40,7 @@ def run_cpd_algorithms(kwargs_namespace: argparse.Namespace):
         r_covcp_level = kwargs_namespace.r_covcp_level
         r_covcp_nb_cores = kwargs_namespace.r_covcp_nb_cores
         r_covcp_seed = kwargs_namespace.r_covcp_seed
-        covcp_name = f"covcp_windsize_{r_covcp_window_size}_stableset_{r_covcp_stable_set_length}.json"
+        covcp_name = f"covcp_windsize_{r_covcp_window_size[0]}_stableset_{r_covcp_stable_set_length}.json"
         covcp_json_path = my_cpd.init_pred_saving(pred_dir, covcp_name)
 
     # RUNNING CPD ALGORTIHMS
@@ -88,5 +88,4 @@ if __name__ == "__main__":
     parser.add_argument("--r-covcp-buffer-id", nargs='?', const=1, type=int, default=1, help="buffer file id for covcp intermediate file saving, must be chosen carefully so that each cpd thread has its own buffer id")
 
     args = parser.parse_args()
-    print(args.pred_dir)
     run_cpd_algorithms(args)
