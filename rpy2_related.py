@@ -25,11 +25,11 @@ def get_nested_named_element_from_R_list(obj, named_elem:str):
             target_obj = target_obj.rx2(name)
     return target_obj
 
-def glasso_cost_func(start, end, signal, pen_mult_coef, temp_path):
+def glasso_cost_func(start, end, signal, pen_mult_coef, buffer_path):
     # extracting the target subsignal in R
     sub_signal = signal[start:end, :]
-    np.save(f"{temp_path}.npy", sub_signal)
-    r_subsignal = r_RcppCNPy.npyLoad(f"{temp_path}.npy")
+    np.save(f"{buffer_path}.npy", sub_signal)
+    r_subsignal = r_RcppCNPy.npyLoad(f"{buffer_path}.npy")
     # applying the R implementation of Graphical Lasso
     raw_pen_coef = r_covcp.chooseRho(r_subsignal)
     pen_coef = r_base.c(pen_mult_coef * raw_pen_coef[0])

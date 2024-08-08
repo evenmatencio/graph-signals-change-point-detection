@@ -1,4 +1,5 @@
 import time
+import os
 
 import numpy as np
 import networkx as nx
@@ -7,14 +8,25 @@ import result_related as my_res
 import utils as my_ut
 import rpy2_related as my_rpy2
 
-from typing import List
+from typing import List, Literal
 from math import floor
 from tqdm import tqdm
+
+cpd_methods_name = Literal["statio", "standard_mle", "glasso", "r_covcp"]
+
+### UTILS 
+#########
+
+def init_pred_saving(pred_dir, name):
+    results = {"0": "INIT"}
+    my_ut.create_parent_and_dump_json(pred_dir, name, results, indent=4)
+    return os.path.join(pred_dir, name)
+
 
 ### CPD DYNAMIC PROGRAMMING SOLVER
 ##################################
 
-def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, intermediate_temp_path):
+def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, buffer_path):
     # path_mat[n, K] avec n --> [y_0, ... y_{n-1}] (very important to understand indexing) , K : n_bkps
     # sum_of_cost_mat[n, K]: best cost for signal until sample n with K bkps
 
@@ -30,7 +42,7 @@ def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, interme
     statio_segment_cost = np.full((n_samples+1, n_samples+1), fill_value=np.inf, dtype=np.float64)
     for start in tqdm(range(0, n_samples-min_size+1), desc='Looping over the segments start'):
         for end in range(start+min_size, n_samples+1):
-            statio_segment_cost[start, end] = my_rpy2.glasso_cost_func(start, end, signal, pen_mult_coef, temp_path=intermediate_temp_path)
+            statio_segment_cost[start, end] = my_rpy2.glasso_cost_func(start, end, signal, pen_mult_coef, buffer_path=buffer_path)
 
     # forward computation
     for end in range(min_size, n_samples+1):
@@ -86,10 +98,10 @@ def run_numba_standard_mle_normal_cost_and_store_res(signal: np.ndarray, gt_bkps
     my_ut.load_and_write_json(normal_json_path, exp_id, my_ut.turn_all_list_of_dict_into_str(res), indent=4)
 
 
-def run_r_glasso_cpd_algo_and_store(signal, gt_bkps: List[int], glasso_json_path: str, exp_id: str, pen_mult_coef: float, intermediate_temp_path: str):
+def run_r_glasso_cpd_algo_and_store(signal, gt_bkps: List[int], glasso_json_path: str, exp_id: str, pen_mult_coef: float, buffer_path: str):
     # running CPD algorithm
     t1 = time.perf_counter()
-    glasso_bkps = rglasso_cpd_dynprog(n_bkps=len(gt_bkps)-1, min_size=signal.shape[1], signal=signal, pen_mult_coef=pen_mult_coef, intermediate_temp_path=intermediate_temp_path)
+    glasso_bkps = rglasso_cpd_dynprog(n_bkps=len(gt_bkps)-1, min_size=signal.shape[1], signal=signal, pen_mult_coef=pen_mult_coef, buffer_path=buffer_path)
     t2 = time.perf_counter()
     glasso_bkps.sort()
     glasso_bkps = [int(bkp) for bkp in glasso_bkps]
