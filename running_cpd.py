@@ -28,7 +28,7 @@ def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, interme
 
     # pre-computation, to optimize jit processing
     statio_segment_cost = np.full((n_samples+1, n_samples+1), fill_value=np.inf, dtype=np.float64)
-    for start in tqdm(range(0, n_samples-min_size+1), desc='Looping over the segments start'):
+    for start in tqdm(range(0, n_samples-min_size+1), desc='Looping over the segments start in glasso'):
         for end in range(start+min_size, n_samples+1):
             statio_segment_cost[start, end] = my_rpy2.glasso_cost_func(start, end, signal, pen_mult_coef, temp_path=intermediate_temp_path)
 
@@ -74,7 +74,6 @@ def run_numba_statio_normal_cost_and_store_res(G: nx.Graph, signal: np.ndarray, 
     res = my_res.update_pred_dic_with_one_exp(t1, t2, statio_bkps, gt_bkps, exp_id)
     my_ut.load_and_write_json(statio_json_path, exp_id, my_ut.turn_all_list_of_dict_into_str(res), indent=4)
 
-
 def run_numba_standard_mle_normal_cost_and_store_res(signal: np.ndarray, gt_bkps: List[int], normal_json_path: str, exp_id:int):
     # running CPD algorithm
     t1 = time.perf_counter()
@@ -84,7 +83,6 @@ def run_numba_standard_mle_normal_cost_and_store_res(signal: np.ndarray, gt_bkps
     # logging
     res = my_res.update_pred_dic_with_one_exp(t1, t2, normal_bkps, gt_bkps, exp_id)
     my_ut.load_and_write_json(normal_json_path, exp_id, my_ut.turn_all_list_of_dict_into_str(res), indent=4)
-
 
 def run_r_glasso_cpd_algo_and_store(signal, gt_bkps: List[int], glasso_json_path: str, exp_id: str, pen_mult_coef: float, intermediate_temp_path: str):
     # running CPD algorithm
@@ -96,3 +94,17 @@ def run_r_glasso_cpd_algo_and_store(signal, gt_bkps: List[int], glasso_json_path
     # logging
     res = my_res.update_pred_dic_with_one_exp(t1, t2, glasso_bkps, gt_bkps, exp_id)
     my_ut.load_and_write_json(glasso_json_path, exp_id, my_ut.turn_all_list_of_dict_into_str(res), indent=4)
+
+def run_r_covcp_cpd_algo_and_store(signal_path, gt_bkps: List[int], covcp_json_path: dict, stable_set_length:int, min_seg_length:int, window_sizes, alpha, exp_id, intermediate_temp_path, nb_cores, r_covcp_seed):
+    # running CPD algorithm
+    t1 = time.perf_counter()
+    print('Running R covcp')
+    my_rpy2.init_r_core_management(nb_cores, r_covcp_seed)
+    r_signal = my_rpy2.load_r_signal(f"{signal_path}/{exp_id}_signal.npy")
+    covcp_bkps = my_rpy2.detect_multiple_covcp_bkps(n_bkps=len(gt_bkps)-1, signal=r_signal, stable_set_length=stable_set_length, min_seg_length=min_seg_length, window_sizes=window_sizes, alpha=alpha, bkps=[], intermediate_temp_path=intermediate_temp_path)
+    t2 = time.perf_counter()
+    covcp_bkps.sort()
+    covcp_bkps = [int(bkp) for bkp in covcp_bkps] + [gt_bkps[-1]]
+    # logging
+    res = my_res.update_pred_dic_with_one_exp(t1, t2, covcp_bkps, gt_bkps, exp_id)
+    my_ut.load_and_write_json(covcp_json_path, exp_id, my_ut.turn_all_list_of_dict_into_str(res), indent=4)
