@@ -49,9 +49,9 @@ def run_cpd_algorithms(kwargs_namespace: argparse.Namespace):
         exp_id = str(exp_id)
         G, signal, gt_bkps, min_size = my_ut.load_data(graph_path, signal_path, exp_id, seg_length_hyp)
         if kwargs_namespace.statio:
-            my_cpd.run_numba_statio_normal_cost_and_store_res(G, signal, gt_bkps, statio_json_path, exp_id)
+            my_cpd.run_numba_statio_normal_cost_and_store_res(G, signal, gt_bkps, min_size, statio_json_path, exp_id)
         if kwargs_namespace.standard_mle:
-            my_cpd.run_numba_standard_mle_normal_cost_and_store_res(signal, gt_bkps, mle_json_path, exp_id)
+            my_cpd.run_numba_standard_mle_normal_cost_and_store_res(signal, gt_bkps, min_size, mle_json_path, exp_id)
         if kwargs_namespace.glasso:
             my_cpd.run_r_glasso_cpd_algo_and_store(signal, gt_bkps, lasso_json_path, exp_id, lasso_pen_mult_coef, lasso_buffer_path)
         if kwargs_namespace.r_covcp:
