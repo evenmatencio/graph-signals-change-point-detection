@@ -13,13 +13,13 @@ def run_cpd_algorithms(kwargs_namespace: argparse.Namespace):
     my_ut.create_parent_and_dump_json(pred_dir, "experiment_metadata.json", my_ut.turn_all_list_of_dict_into_str(kwargs_namespace.__dict__), indent=4)
     # parsing
     signal_path = kwargs_namespace.signal_path
+    graph_path = kwargs_namespace.graph_path
     seg_length_hyp = kwargs_namespace.min_size_hypothesis
     exp_id_list = list(range(kwargs_namespace.exp_id_min, kwargs_namespace.exp_id_max))
 
     # COST FUNCTION INITIALIZATION
     # graph stationarity-based
     if kwargs_namespace.statio:
-        graph_path = kwargs_namespace.graph_path
         statio_name = "statio_pred.json"
         statio_json_path = my_cpd.init_pred_saving(pred_dir, statio_name)
     # standard_mle
