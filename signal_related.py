@@ -105,6 +105,9 @@ def generate_rd_signal_in_hyp_with_max_tries(G:nx.Graph, signal_rng:np.random.Ge
 #####################################
 
 def add_diagonal_white_noise(signal_rng:np.random.Generator, signal, sigma):
+    '''
+    WARNING: sigma should be renamed sigma_square
+    '''
     n_samples , n_dims = signal.shape
     cov_mat = sigma * np.eye(n_dims)
     white_noise = signal_rng.multivariate_normal(np.zeros(n_dims), cov_mat, size=n_samples)
