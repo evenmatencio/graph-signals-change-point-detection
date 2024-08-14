@@ -1,6 +1,6 @@
 import numpy as np
 
-import rpy2
+import rpy2.robjects as robjects
 
 from rpy2.robjects.packages import importr
 from sklearn.covariance import log_likelihood
@@ -40,6 +40,7 @@ def get_r_left_subsignal(signal: np.ndarray, split_id: int, buffer_path: str):
     return r_left_subsignal
 
 def get_r_right_subsignal(signal: np.ndarray, split_id: int, buffer_path: str):
+    r_right_subsignal = signal.rx(robjects.IntVector(r_base.seq(1, 5)), True)
     right_sub_signal_arr = np.copy(signal)[split_id:, :]
     np.save(f"{buffer_path}_right_sub_signal.npy", right_sub_signal_arr)
     r_right_subsignal = r_RcppCNPy.npyLoad(f"{buffer_path}_right_sub_signal.npy")
@@ -53,11 +54,9 @@ def init_r_core_management(nb_cores, seed):
 ### COST FUNCTIONS 
 ######################
 
-def glasso_cost_func(start, end, signal, pen_mult_coef, buffer_path):
+def glasso_cost_func(start, end, r_signal, pen_mult_coef):
     # extracting the target subsignal in R
-    sub_signal = signal[start:end, :]
-    np.save(f"{buffer_path}.npy", sub_signal)
-    r_subsignal = r_RcppCNPy.npyLoad(f"{buffer_path}.npy")
+    r_subsignal = r_signal.rx(robjects.IntVector(r_base.seq(start, end)), True)
     # applying the R implementation of Graphical Lasso
     raw_pen_coef = r_covcp.chooseRho(r_subsignal)
     pen_coef = r_base.c(pen_mult_coef * raw_pen_coef[0])
@@ -86,10 +85,10 @@ def get_covcp_localization(covcp_results, window_sizes):
             stats_argmx = int(np.argmax(stat_values_arr))
             central_point_argmax = central_points[stats_argmx]
             return central_point_argmax, (central_point_argmax - window_size, central_point_argmax + window_size)
-        
-def detect_multiple_covcp_bkps(n_bkps, signal, stable_set_length, min_seg_length, window_sizes, alpha, bkps, buffer_path, left_offset=0):
+
+def detect_multiple_covcp_bkps(n_bkps, r_signal, stable_set_length, min_seg_length, window_sizes, alpha, bkps,left_offset=0):
     bootstrap_stableSet = r_base.seq(1, stable_set_length)
-    cov_cp_stat_test = r_covcp.covTest(window_sizes, alpha, signal, r_covcp.noPattern, r_covcp.infNorm, bootstrap_stableSet)
+    cov_cp_stat_test = r_covcp.covTest(window_sizes, alpha, r_signal, r_covcp.noPattern, r_covcp.infNorm, bootstrap_stableSet)
     cov_cp_loc = get_covcp_localization(cov_cp_stat_test, window_sizes)
     if cov_cp_loc is None:
         return bkps
@@ -99,9 +98,8 @@ def detect_multiple_covcp_bkps(n_bkps, signal, stable_set_length, min_seg_length
         bkps.append(left_offset + cp)
         if len(bkps) < n_bkps:
             # apply to left and right subsignal
-            signal_arr = np.copy(np.asarray(signal))
             if cp - 1 > 2*min_seg_length:
-                r_left_subsignal = get_r_left_subsignal(signal_arr, cp-1, buffer_path)
+                r_left_subsignal = r_signal.rx(robjects.IntVector(r_base.seq(1, cp)), True)
                 # adapting window size
                 left_window_sizes = window_sizes
                 if r_base.dim(r_left_subsignal)[0] < 2*window_sizes[0]:
@@ -110,9 +108,9 @@ def detect_multiple_covcp_bkps(n_bkps, signal, stable_set_length, min_seg_length
                 left_stable_set_length = stable_set_length
                 if r_base.dim(r_left_subsignal)[0] < stable_set_length:
                     left_stable_set_length = r_base.dim(r_left_subsignal)[0] - 1
-                detect_multiple_covcp_bkps(n_bkps, r_left_subsignal, left_stable_set_length, min_seg_length, left_window_sizes, alpha, bkps, buffer_path, left_offset=left_offset)
-            if signal_arr.shape[0] - cp + 1 > 2*min_seg_length:
-                r_right_subsignal = get_r_right_subsignal(signal_arr, cp-1, buffer_path)
+                detect_multiple_covcp_bkps(n_bkps, r_left_subsignal, left_stable_set_length, min_seg_length, left_window_sizes, alpha, bkps, left_offset=left_offset)
+            if r_base.dim(r_signal)[0] - cp + 1 > 2*min_seg_length:
+                r_right_subsignal = r_signal.rx(robjects.IntVector(r_base.seq(cp, r_base.dim(r_signal)[0])), True)
                 # adapting window size
                 right_window_sizes = window_sizes
                 if r_base.dim(r_right_subsignal)[0] < 2*window_sizes[0]:
@@ -121,5 +119,5 @@ def detect_multiple_covcp_bkps(n_bkps, signal, stable_set_length, min_seg_length
                 right_stable_set_length = stable_set_length
                 if r_base.dim(r_right_subsignal)[0] < stable_set_length:
                     right_stable_set_length = r_base.dim(r_right_subsignal)[0] - 1
-                detect_multiple_covcp_bkps(n_bkps, r_right_subsignal, right_stable_set_length, min_seg_length, right_window_sizes, alpha, bkps, buffer_path, left_offset=left_offset+cp)
+                detect_multiple_covcp_bkps(n_bkps, r_right_subsignal, right_stable_set_length, min_seg_length, right_window_sizes, alpha, bkps, left_offset=left_offset+cp)
         return bkps

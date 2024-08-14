@@ -19,7 +19,8 @@ cpd_methods_name = Literal["statio", "standard_mle", "glasso", "r_covcp"]
 
 def init_pred_saving(pred_dir, name):
     results = {"0": "INIT"}
-    my_ut.create_parent_and_dump_json(pred_dir, name, results, indent=4)
+    if not os.path.exists(os.path.join(pred_dir, name)):
+        my_ut.create_parent_and_dump_json(pred_dir, name, results, indent=4)
     return os.path.join(pred_dir, name)
 
 
@@ -37,12 +38,14 @@ def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, buffer_
     path_mat[0, :] = -1
     sum_of_cost_mat = np.full((n_samples+1, n_bkps+1),  fill_value=np.inf, dtype=np.float64)
     sum_of_cost_mat[0, :] = 0
+    np.save(f"{buffer_path}.npy", signal)
+    r_signal = my_rpy2.load_r_signal(f"{buffer_path}.npy")
 
     # pre-computation, to optimize jit processing
     statio_segment_cost = np.full((n_samples+1, n_samples+1), fill_value=np.inf, dtype=np.float64)
     for start in tqdm(range(0, n_samples-min_size+1), desc='Looping over the segments start in glasso'):
         for end in range(start+min_size, n_samples+1):
-            statio_segment_cost[start, end] = my_rpy2.glasso_cost_func(start, end, signal, pen_mult_coef, buffer_path=buffer_path)
+            statio_segment_cost[start, end] = my_rpy2.glasso_cost_func(start, end, r_signal, pen_mult_coef)
 
     # forward computation
     for end in range(min_size, n_samples+1):
@@ -107,13 +110,13 @@ def run_r_glasso_cpd_algo_and_store(signal, gt_bkps: List[int], glasso_json_path
     res = my_res.update_pred_dic_with_one_exp(t1, t2, glasso_bkps, gt_bkps, exp_id)
     my_ut.load_and_write_json(glasso_json_path, exp_id, my_ut.turn_all_list_of_dict_into_str(res), indent=4)
 
-def run_r_covcp_cpd_algo_and_store(signal_path, gt_bkps: List[int], covcp_json_path: dict, stable_set_length:int, min_seg_length:int, window_sizes, alpha, exp_id, buffer_path, nb_cores, r_covcp_seed):
+def run_r_covcp_cpd_algo_and_store(signal_path, gt_bkps: List[int], covcp_json_path: dict, stable_set_length:int, min_seg_length:int, window_sizes, alpha, exp_id, nb_cores, r_covcp_seed):
     # running CPD algorithm
     t1 = time.perf_counter()
     print('Running R covcp')
     my_rpy2.init_r_core_management(nb_cores, r_covcp_seed)
-    r_signal = my_rpy2.load_r_signal(f"{signal_path}/{exp_id}_signal.npy")
-    covcp_bkps = my_rpy2.detect_multiple_covcp_bkps(n_bkps=len(gt_bkps)-1, signal=r_signal, stable_set_length=stable_set_length, min_seg_length=min_seg_length, window_sizes=window_sizes, alpha=alpha, bkps=[], buffer_path=buffer_path)
+    r_signal = my_rpy2.load_r_signal(f"{signal_path}_signal.npy")
+    covcp_bkps = my_rpy2.detect_multiple_covcp_bkps(n_bkps=len(gt_bkps)-1, r_signal=r_signal, stable_set_length=stable_set_length, min_seg_length=min_seg_length, window_sizes=window_sizes, alpha=alpha, bkps=[])
     t2 = time.perf_counter()
     covcp_bkps.sort()
     covcp_bkps = [int(bkp) for bkp in covcp_bkps] + [gt_bkps[-1]]
