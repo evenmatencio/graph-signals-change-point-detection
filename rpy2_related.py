@@ -87,14 +87,17 @@ def get_covcp_localization(covcp_results, window_sizes):
             return central_point_argmax, (central_point_argmax - window_size, central_point_argmax + window_size)
 
 def detect_multiple_covcp_bkps(n_bkps, r_signal, stable_set_length, min_seg_length, window_sizes, alpha, bkps,left_offset=0):
+    # print('Entry in detec_mult, r_signal.dim = ', r_signal.dim)
     bootstrap_stableSet = r_base.seq(1, stable_set_length)
     cov_cp_stat_test = r_covcp.covTest(window_sizes, alpha, r_signal, r_covcp.noPattern, r_covcp.infNorm, bootstrap_stableSet)
     cov_cp_loc = get_covcp_localization(cov_cp_stat_test, window_sizes)
     if cov_cp_loc is None:
+        # print('No cp detected')
         return bkps
     else:
         # add current bkp
         cp, _ = cov_cp_loc
+        # print('cp detected:', left_offset + cp)
         bkps.append(left_offset + cp)
         if len(bkps) < n_bkps:
             # apply to left and right subsignal
