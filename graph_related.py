@@ -49,7 +49,7 @@ def generate_KNN_random_geographic_graph(params_rng, n_nodes, K):
 ### GRAPH MODIFICATION
 #####################################
 
-def modify_graph_connectivity_from_binary_adj_mat_2(G:nx.Graph, edge_prop, graph_rng:np.random.Generator):
+def modify_graph_connectivity_from_binary_adj_mat(G:nx.Graph, edge_prop, graph_rng:np.random.Generator):
     # initialization
     n_edges = G.number_of_edges()
     n_nodes = G.number_of_nodes()
@@ -58,7 +58,7 @@ def modify_graph_connectivity_from_binary_adj_mat_2(G:nx.Graph, edge_prop, graph
     # retrieving the actual graph edges
     directed_edges = [(i, j) for i, j in zip(np.nonzero(adj_mat)[0], np.nonzero(adj_mat)[1])]
     non_directed_edges = set([(min(e), max(e)) for e in directed_edges])
-    # listing all possible edges to select those to be add
+    # listing all possible edges to select those to be added
     all_possible_edges_list = []
     for i in range(n_nodes-1):
         for j in range(i+1, n_nodes):
@@ -75,7 +75,7 @@ def modify_graph_connectivity_from_binary_adj_mat_2(G:nx.Graph, edge_prop, graph
     possibles_edges_to_add = all_possible_edges_set.difference(non_directed_edges)
     possibles_edges_to_add_list = list(possibles_edges_to_add)
     n_edges_to_add = n_edges_to_remove
-    new_edges_ids = graph_rng.choice(len(possibles_edges_to_add), min(n_edges_to_add, len(possibles_edges_to_add)), replace=False)
+    new_edges_ids = graph_rng.choice(len(possibles_edges_to_add), size=min(n_edges_to_add, len(possibles_edges_to_add)), replace=False)
     new_edges_list = [possibles_edges_to_add_list[edge_id] for edge_id in new_edges_ids]
     for new_edge in new_edges_list:
         adj_mat[new_edge[1], new_edge[0]] = 1
@@ -86,8 +86,86 @@ def modify_graph_connectivity_from_binary_adj_mat_2(G:nx.Graph, edge_prop, graph
 def load_modify_connec_and_store_graph(original_graph_path:int, exp_id:int, edge_prop:float, rng:np.random.Generator, target_dir:str):
     adj_mat = np.load(f"{original_graph_path}/{exp_id}_mat_adj.npy", allow_pickle=False)
     G = nx.from_numpy_array(adj_mat)
-    G_modif = modify_graph_connectivity_from_binary_adj_mat_2(G, edge_prop, rng)
+    G_modif = modify_graph_connectivity_from_binary_adj_mat(G, edge_prop, rng)
     save_graph(G_modif, f"{target_dir}/{exp_id}_mat_adj.npy")
+
+def modify_graph_connectivity_adding_edges(G:nx.Graph, edge_prop, graph_rng:np.random.Generator):
+    # initialization
+    n_edges = G.number_of_edges()
+    n_nodes = G.number_of_nodes()
+    n_edges_to_add = int(n_edges * edge_prop)
+    adj_mat = nx.adjacency_matrix(G).toarray()
+    # retrieving the actual graph edges
+    directed_edges = [(i, j) for i, j in zip(np.nonzero(adj_mat)[0], np.nonzero(adj_mat)[1])]
+    non_directed_edges = set([(min(e), max(e)) for e in directed_edges])
+    # listing all possible edges to select those to be added
+    all_possible_edges_list = []
+    for i in range(n_nodes-1):
+        for j in range(i+1, n_nodes):
+            all_possible_edges_list.append((i, j))
+    all_possible_edges_set = set(all_possible_edges_list)
+    # adding some edges
+    possibles_edges_to_add = all_possible_edges_set.difference(non_directed_edges)
+    possibles_edges_to_add_list = list(possibles_edges_to_add)
+    # giving information if too many edges are expected to be added
+    if n_edges_to_add > len(possibles_edges_to_add_list):
+        print('Too many edges are expected to be added: will return a complete graph.')
+    new_edges_ids = graph_rng.choice(len(possibles_edges_to_add), size=min(n_edges_to_add, len(possibles_edges_to_add)), replace=False)
+    new_edges_list = [possibles_edges_to_add_list[edge_id] for edge_id in new_edges_ids]
+    for new_edge in new_edges_list:
+        adj_mat[new_edge[1], new_edge[0]] = 1
+        adj_mat[new_edge[0], new_edge[1]] = 1
+    new_G = nx.from_numpy_array(adj_mat)
+    return new_G
+
+def load_add_edges_and_store_graph(original_graph_path:int, exp_id:int, edge_prop:float, rng:np.random.Generator, target_dir:str):
+    adj_mat = np.load(f"{original_graph_path}/{exp_id}_mat_adj.npy", allow_pickle=False)
+    G = nx.from_numpy_array(adj_mat)
+    G_modif = modify_graph_connectivity_adding_edges(G, edge_prop, rng)
+    save_graph(G_modif, f"{target_dir}/{exp_id}_mat_adj.npy")
+
+def modify_graph_connectivity_removing_edges(G:nx.Graph, edge_prop, graph_rng:np.random.Generator):
+    # initialization
+    n_edges = G.number_of_edges()
+    n_edges_to_remove = int(n_edges * edge_prop)
+    adj_mat = nx.adjacency_matrix(G).toarray()
+    # retrieving the actual graph edges
+    directed_edges = [(i, j) for i, j in zip(np.nonzero(adj_mat)[0], np.nonzero(adj_mat)[1])]
+    non_directed_edges = set([(min(e), max(e)) for e in directed_edges])
+    # removing some random edges
+    n_edges_removed = 0
+    possible_edges_to_remove_list = list(non_directed_edges.copy())
+    while n_edges_removed < n_edges_to_remove :
+        # we do not try to remove edges if there is no possible removal anymore
+        if len(possible_edges_to_remove_list) == 0:
+            break
+        # randomly selecting an edge among those available 
+        edge_id_to_remove = graph_rng.choice(len(possible_edges_to_remove_list), size=1, replace=False)
+        edge_to_remove = possible_edges_to_remove_list[int(edge_id_to_remove)]
+        adj_mat[edge_to_remove[0], edge_to_remove[1]] = 0
+        adj_mat[edge_to_remove[1], edge_to_remove[0]] = 0
+        # checking the connectivity of the resulting graph
+        new_G = nx.from_numpy_array(adj_mat)
+        if nx.is_connected(new_G):
+            # if the resulting graph is still connected we actually remove this edge
+            possible_edges_to_remove_list.remove(edge_to_remove)
+            n_edges_removed += 1
+        else:
+            # otherwise we keep the edge in the adjacency matrix but remove it from the possible edges to remove
+            adj_mat[edge_to_remove[0], edge_to_remove[1]] = 1
+            adj_mat[edge_to_remove[1], edge_to_remove[0]] = 1
+            possible_edges_to_remove_list.remove(edge_to_remove)
+    if n_edges_removed < n_edges_to_remove:
+        print('Edge proportion to remove is too high. We removed all possible edges before the graph is not connected anymore.')
+    new_G = nx.from_numpy_array(adj_mat)
+    return new_G
+
+def load_remove_edges_and_store_graph(original_graph_path:int, exp_id:int, edge_prop:float, rng:np.random.Generator, target_dir:str):
+    adj_mat = np.load(f"{original_graph_path}/{exp_id}_mat_adj.npy", allow_pickle=False)
+    G = nx.from_numpy_array(adj_mat)
+    G_modif = modify_graph_connectivity_removing_edges(G, edge_prop, rng)
+    save_graph(G_modif, f"{target_dir}/{exp_id}_mat_adj.npy")
+
 
 def pick_another_graph(graph_path: str, previous_exp_id: int, max_id: int, graph_rng: np.random.Generator):
     new_exp_id = previous_exp_id
