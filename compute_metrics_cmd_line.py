@@ -7,9 +7,6 @@ import numpy as np
 import utils as my_ut
 import result_related as my_res
 
-from pathlib import Path
-
-
 
 def compute_and_store_results(kwargs_namespace: argparse.Namespace):
     
@@ -39,9 +36,17 @@ def compute_and_store_results(kwargs_namespace: argparse.Namespace):
             for margin in margin_val_list:
                 method_metrics[f"margin_{margin}"] = {"recall": {'raw': []}, "precision": {'raw': []}, "f1_score": {'raw': []}}
 
-            # compute metrics for each iteration of the current experiment
+            # retrieving the different iterations of the target experiment,
+            # with specific pre-processing for the real dataset eeg-movement
             method_pred = my_ut.open_json(f"{pred_dir}/{file_name}.json")
-            for exp_id in method_pred.keys():
+            method_keys = list(method_pred.keys())
+            if kwargs_namespace.eeg_movement:
+                method_keys = ['0' + i for i in list(method_pred.keys()) if len(i)==1] + [i for i in list(method_pred.keys()) if len(i)==2]
+                method_keys.sort()
+                if verbose:
+                    print(method_keys)
+            # compute metrics for each iteration of the current experiment
+            for exp_id in method_keys:
                 method_pred_bkps = my_ut.turn_str_of_list_into_list_of_int(method_pred[exp_id]["pred"])
                 gt_bkps = my_ut.turn_str_of_list_into_list_of_int(method_pred[exp_id]["gt"])
                 my_res.compute_and_update_metrics(gt_bkps, method_pred_bkps, method_metrics, margin_val_list)
@@ -59,7 +64,7 @@ def compute_and_store_results(kwargs_namespace: argparse.Namespace):
                 else:
                     method_metrics[metric_name]['mean'] = round(np.mean(res['raw']), ndigits=4)
                     method_metrics[metric_name]['std'] = round(np.std(res['raw']), ndigits=4)
-        
+       
             # storing the result of the current metric for the current experiment
             formatted_metrics = my_ut.turn_all_list_of_dict_into_str(method_metrics)
             my_ut.load_and_write_json(os.path.join(pred_dir, 'metrics.json'), new_key=file_name, new_data=formatted_metrics, indent=4)
@@ -78,6 +83,7 @@ if __name__ == "__main__":
 
     # optional arguments
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbosity level")
+    parser.add_argument("--eeg-movement", action="store_true", help="Whether to run over the real dataset EEG imagerymovement.")
 
     args = parser.parse_args()
     compute_and_store_results(args)
