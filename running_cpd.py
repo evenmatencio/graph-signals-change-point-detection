@@ -11,17 +11,33 @@ import rpy2_related as my_rpy2
 from typing import List, Literal
 from math import floor
 from tqdm import tqdm
+from scipy.linalg import eigh
 
-cpd_methods_name = Literal["statio", "standard_mle", "glasso", "r_covcp"]
 
 ### UTILS 
 #########
 
 def init_pred_saving(pred_dir, name):
-    results = {"0": "INIT"}
+    results = {}
     if not os.path.exists(os.path.join(pred_dir, name)):
         my_ut.create_parent_and_dump_json(pred_dir, name, results, indent=4)
     return os.path.join(pred_dir, name)
+
+
+
+### INITIALIZATION
+##################
+
+def init_station_normal_cost(signal, graph_laplacian_mat):
+    '''signal (array): of shape [n_samples, n_dim]'''
+    # computation of the graph fourier transform
+    _, eigvects = eigh(graph_laplacian_mat)
+    gft =  signal @ eigvects # equals signal.dot(eigvects) = eigvects.T.dot(signal.T).T
+    gft_mean = np.mean(gft, axis=0)
+    # computation of the per-segment cost utils
+    gft_square_cumsum = np.concatenate([np.zeros((1, signal.shape[1])), np.cumsum((gft - gft_mean[None, :])**2, axis=0)], axis=0)
+    return gft_square_cumsum.astype(np.float64)
+
 
 
 ### CPD DYNAMIC PROGRAMMING SOLVER
@@ -30,6 +46,9 @@ def init_pred_saving(pred_dir, name):
 def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, buffer_path):
     # path_mat[n, K] avec n --> [y_0, ... y_{n-1}] (very important to understand indexing) , K : n_bkps
     # sum_of_cost_mat[n, K]: best cost for signal until sample n with K bkps
+    # we fill-in the sum_of_cost_mat row by row, i.e for longer and longer signals (top to down), for higher and 
+    # highr number of bkp (left to right), because in dynamic programming
+    # we need the results of the previous sub-problems before solving the current one
 
     # initialization 
     n_samples = signal.shape[0]
@@ -55,6 +74,7 @@ def rglasso_cpd_dynprog(n_bkps:int, min_size:int, signal, pen_mult_coef, buffer_
         for k_bkps in range(1, min(max_admissible_n_bkp+1, n_bkps+1)):
             soc_optim = np.inf
             soc_argmin = -1
+            # the following step corresponds to the last line of eq (21) P.19 Truong, Oudre, Vayatis
             for mid in range(min_size*k_bkps, end - min_size + 1):
                 soc = sum_of_cost_mat[mid, k_bkps-1] + statio_segment_cost[mid, end]
                 if soc < soc_optim:
@@ -78,11 +98,8 @@ def run_numba_statio_normal_cost_and_store_res(G: nx.Graph, signal: np.ndarray, 
     # running CPD algorithm
     t1 = time.perf_counter()
     graph_lapl_mat = nx.laplacian_matrix(G).toarray().astype(np.float64)
-    ###############################################################
-    # graph_lapl_mat = np.eye(signal.shape[1])
-    ###############################################################
-    gft_square_cumsum = my_numb.init_station_normal_cost(signal, graph_lapl_mat)
-    statio_bkps = my_numb.numba_cpd_dynprog_statio_cost_2_optim(len(gt_bkps)-1, min_size, gft_square_cumsum)
+    gft_square_cumsum = init_station_normal_cost(signal, graph_lapl_mat)
+    statio_bkps = my_numb.numba_cpd_dynprog_statio_cost_optim(len(gt_bkps)-1, min_size, gft_square_cumsum)
     statio_bkps = [int(bkp) for bkp in statio_bkps]
     t2 = time.perf_counter()
     # logging
@@ -92,7 +109,7 @@ def run_numba_statio_normal_cost_and_store_res(G: nx.Graph, signal: np.ndarray, 
 def run_numba_standard_mle_normal_cost_and_store_res(signal: np.ndarray, gt_bkps: List[int], min_size:int, normal_json_path: str, exp_id:int):
     # running CPD algorithm
     t1 = time.perf_counter()
-    normal_bkps = my_numb.numba_cpd_dynprog_mle_standard_cost_2_optim(len(gt_bkps) - 1, min_size, signal)
+    normal_bkps = my_numb.numba_cpd_dynprog_mle_standard_cost_optim(len(gt_bkps) - 1, min_size, signal)
     normal_bkps = [int(bkp) for bkp in normal_bkps]
     t2 = time.perf_counter()
     # logging
