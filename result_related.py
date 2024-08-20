@@ -20,19 +20,29 @@ def compute_f1_score(preci, recall):
         return 2 * (preci * recall) / (preci + recall)
     return 0
 
+def compute_hausdorff(true_bkps, pred_bkps):
+    # to avoid error when no bkp has been found (for covcp method for instance)
+    if len(pred_bkps) == 1:
+        return hausdorff(true_bkps, [1] + pred_bkps)
+    return hausdorff(true_bkps, pred_bkps)
+
 def compute_assignement_cost(true_bkps, pred_bkps, metrics_dic):
-    # initialize cost matrix
-    cost_matrix = -1 * np.ones((len(true_bkps)-1, len(pred_bkps)-1))
-    for i, gt_bkp in enumerate(true_bkps[:-1]):
-        for j, pred_bkp in enumerate(pred_bkps[:-1]):
-            cost_matrix[i, j] = abs(gt_bkp - pred_bkp)
-    # find solution and compute resulting cost
-    solution_row_ind, solution_col_ind = scipy.optimize.linear_sum_assignment(cost_matrix)
-    assignement_cost = cost_matrix[solution_row_ind, solution_col_ind].mean()
-    metrics_dic['assignement_cost']['raw'].append(int(assignement_cost))
+    # we compute the assignment cost only the correct number of bkps is detected
+    if len(true_bkps) == len(pred_bkps):
+        # initialize cost matrix
+        cost_matrix = -1 * np.ones((len(true_bkps)-1, len(pred_bkps)-1))
+        for i, gt_bkp in enumerate(true_bkps[:-1]):
+            for j, pred_bkp in enumerate(pred_bkps[:-1]):
+                cost_matrix[i, j] = abs(gt_bkp - pred_bkp)
+        # find solution and compute resulting cost
+        solution_row_ind, solution_col_ind = scipy.optimize.linear_sum_assignment(cost_matrix)
+        assignement_cost = cost_matrix[solution_row_ind, solution_col_ind].mean()
+        metrics_dic['assignement_cost']['raw'].append(round(float(assignement_cost), 4))
+    else:
+        metrics_dic['assignement_cost']['raw'].append(round(float(np.mean(true_bkps[:-1])), 4))
 
 def compute_and_update_metrics(true_bkps, pred_bkps, metrics_dic, prec_rec_margin_list):
-    hsdrf = hausdorff(true_bkps, pred_bkps)
+    hsdrf = compute_hausdorff(true_bkps, pred_bkps)
     randind = randindex(true_bkps, pred_bkps)
     for margin in prec_rec_margin_list:
         preci, recall = precision_recall(true_bkps, pred_bkps, margin)
