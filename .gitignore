@@ -5,15 +5,15 @@ env
 .env
 
 # Results
-**Results
-**results*
+Results
+results*
 
 
 # Data
-**data*
-**Data
-**images
-**Images
+data*
+Data
+images
+Images
 
 # Python utils
 __pycache__
