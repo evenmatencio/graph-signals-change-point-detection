@@ -33,19 +33,6 @@ def get_nested_named_element_from_R_list(obj, named_elem:str):
 def load_r_signal(signal_path):
     return r_RcppCNPy.npyLoad(signal_path)
 
-def get_r_left_subsignal(signal: np.ndarray, split_id: int, buffer_path: str):
-    left_sub_signal_arr = np.copy(signal)[:split_id, :]
-    np.save(f"{buffer_path}_left_sub_signal.npy", left_sub_signal_arr)
-    r_left_subsignal = r_RcppCNPy.npyLoad(f"{buffer_path}_left_sub_signal.npy")
-    return r_left_subsignal
-
-def get_r_right_subsignal(signal: np.ndarray, split_id: int, buffer_path: str):
-    r_right_subsignal = signal.rx(robjects.IntVector(r_base.seq(1, 5)), True)
-    right_sub_signal_arr = np.copy(signal)[split_id:, :]
-    np.save(f"{buffer_path}_right_sub_signal.npy", right_sub_signal_arr)
-    r_right_subsignal = r_RcppCNPy.npyLoad(f"{buffer_path}_right_sub_signal.npy")
-    return r_right_subsignal
-
 def init_r_core_management(nb_cores, seed):
     r_domc.registerDoMC(cores = nb_cores)
     r_base.set_seed(seed)
