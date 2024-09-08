@@ -8,6 +8,10 @@ python run_cpd_cmd_line.py data_1/synthetic_data/signal/within_hyp/running_time_
 
 python run_cpd_cmd_line.py data_1/real_data/physionet.org/processed_signals/filtered_0.5-40_order_3_subsampled_8/S057 13 15 minimal results_1/real_data/eeg_movement/filtered_0.5-40_order_3_subsampled_8/S057 --eeg-movement --r-covcp --r-covcp-stable-set-length 80 --r-covcp-window-size 80 --r-covcp-level 0.3 --r-covcp-nb-cores 1 --r-covcp-seed 1 --graph-path=data_1/real_data/physionet.org/graph/KNN_4_64_ch_graph_mat_adj_order_signal_header.npy
 
-python run_cpd_cmd_line.py data_1/real_data/physionet.org/processed_signals/filtered_0.5-40_order_3_subsampled_8/S060 3 15 minimal results_1/real_data/eeg_movement/filtered_0.5-40_order_3_subsampled_8/S060 --eeg-movement --statio --standard-mle --graph-path=data_1/real_data/physionet.org/graph/KNN_4_64_ch_graph_mat_adj_order_signal_header.npy
+python run_cpd_cmd_line.py data_1/real_data/physionet.org/processed_signals/filtered_0.5-40_order_3_subsampled_8 3 15 minimal results_1/real_data/eeg_movement/filtered_0.5-40_order_3_subsampled_8 --eeg-movement --statio  --graph-path=data_1/real_data/physionet.org/graph/ER_64_edge_prop_0.5_mat_adj.npy
 
-python compute_metrics_cmd_line.py results_1/synthetic/within_hypothesis_noisy/graph_connec_modif/ER_graphs/SNR_20_edges_added --method-pred-file-names  covcp_windsize_80_stableset_80 lasso_penmultcoef_4.0_pred standard_mle_pred statio_pred --margins 1 2 5 10 15 20 25 35 50
+python compute_metrics_cmd_line.py results_1/synthetic/within_hypothesis_noisy/SNR_20_varying_segment --method-pred-file-names  covcp_windsize_80_stableset_80 lasso_penmultcoef_4.0_pred standard_mle_pred statio_pred --margins 1 2 5 10 15 20 25 35 50
+
+python compute_metrics_cmd_line.py results_1/synthetic/within_hypothesis_noisy/SNR_20_varying_segment_length_small_for_statio_2 --method-pred-file-names statio_pred --margins 1 2 5 10 15 20 25 35 50
+
+python compute_metrics_cmd_line.py results_1/real_data/eeg_movement/filtered_0.5-40_order_3_subsampled_8 --method-pred-file-names statio_pred standard_mle_pred covcp_windsize_80_stableset_80 statio_pred_other_graph --margins 1 5 10 15 20 25 30 35 40 45 50 55
