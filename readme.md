@@ -10,36 +10,42 @@ The repository is organized as follows:
 
 <details><summary>Detailed list</summary>
     <ul>
-        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/utils.py'>utils</a>: file writing and processing.</li>
-        <li>[signal_related](signal_related.py): signal generation and modification.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/utils.py'>utils.py</a>: file writing and processing.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/signal_related.py'>signal_related.py</a>: signal generation and modification.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/graph_related.py'>graph_related.py</a>: graph generation and modification.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/result_related.py'>result_related.py</a>: metrics computation, processing and storage.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/custom_cost_functions.py'>custom_cost_functions.py</a>: cost function classes, from the <a href='https://centre-borelli.github.io/ruptures-docs/'>ruptures</a>  <i>BaseCost</i> class.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/numba_cost_functions.py'>numba_cost_functions.py</a>: numba-compatible implementations of the cost functions.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/running_cpd.py'>running_cpd.py</a>: utils and dynamic programming implementation for CPD solving.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/rpy2_related.py'>rpy2_related.py</a>: utils and wrapping functions for the apllication of the Graph Lasso algorithm from <a href="#Friedman2008">[Friedman2008]</a> and the <a href='https://github.com/akopich/covcp'>covcp</a> method from <a href="#Avanesov2018">[Avanesov2018]</a>.</li>
     </ul>
 </details>
 
 
-
-- `signal_related`: signal generation and modification. 
-- `graph_related`: graph generation and modification.
-- `result_related`: metrics computation, processing and storage.
-        - `custom_cost_functions`: cost function classes, from the [ruptures](https://centre-borelli.github.io/ruptures-docs/) BaseCost class. 
-        - `numba_cost_functions`: [numba](https://numba.pydata.org/)-compatible implementations of the cost functions.
-        - `running_cpd`: utils and dynamic programming implementation for CPD solving.
-        - `rpy2_related`: utils and wrapping functions for the apllication of the Graph Lasso algorithm from [glasso](https://cran.r-project.org/web/packages/glasso/index.html) [[Friedman2008]](Friedman2008) and the [covcp](https://github.com/akopich/covcp) [[Avanesov2018]](#Avanesov2018) method based on the [rpy2](https://centre-borelli.github.io/ruptures-docs/) package.
-
 ### Command Line scripts
 
-- `run_cpd_cmd_line`: produces predictions files for the target signals and methods.
-- `compute_metrics_cmd_line`: produces metrics files based on prediction files. 
+<details><summary>Detailed list</summary>
+    <ul>
+        <li> <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/run_cpd_cmd_line.py'>run_cpd_cmd_line.py</a>: produces predictions files for the target signals and methods.
+        <li> <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/compute_metrics_cmd_line.py'>compute_metrics_cmd_line.py</a>: produces metrics files based on prediction files. 
+    </ul>
+</details>
 
 
 ### Jupyter notebooks
 
-- `covariance_matrix_cpd`: contains the main utilities such as predictions generation (same as but more flexible than `run_cpd_cmd_line`), metrics computation (same as but more flexible than `compute_metrics_cmd_line`), plotting utils and cells as well as experiments presentation and visualization.
-- `cpd_playground`: additional content related to CPD (search algorithms comparions) and the application to local mean change for graph signals, through the Graph Fourier Scan Statistic [[Ferrari2019]](#Ferrari2019).
-- `graph_stationarity`: additional content related to graph stationarity. Includes the appendix material of the work on Covariance CPD.
-- `real_dataset_preprocessing`: utils, visualization and preprocessing for different CPD real datasets.
-- `rpy2_covariance_cpd`: experiments on different R libraries with rpy2.
+<details><summary>Detailed list</summary>
+    <ul>
+    <li> <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/covariance_matrix_cpd.ipynb'>covariance_matrix_cpd.ipynb</a>: contains the main utilities such as predictions generation (same as but more flexible than <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/run_cpd_cmd_line.py'>run_cpd_cmd_line.py</a>), metrics computation (same as but more flexible than <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/compute_metrics_cmd_line.py'>compute_metrics_cmd_line.py</a>), plotting utils and cells as well as experiments presentation and visualization.
+    <li> <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/cpd_playground.ipynb'>cpd_playground.ipynb</a>: additional content related to CPD (search algorithms comparions) and the application to local mean change for graph signals, through the Graph Fourier Scan Statistic <a href="#Ferrari2019">[Ferrari2019]</a>
+    <li> <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/graph_stationarity.ipynb'>graph_stationarity.ipynb</a>: additional content related to graph stationarity. Includes the appendix material of the work on Covariance CPD.
+    <li> <a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/real_dataset_preprocessing.ipynb'>real_dataset_preprocessing</a>: utils, visualization and preprocessing for different CPD real datasets.
+    </ul>
+</details>
 
+## Usage
 
+:construction: In progress :construction:
 
 
 ## References
