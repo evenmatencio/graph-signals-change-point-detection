@@ -8,14 +8,22 @@ The repository is organized as follows:
 
 ### Python regular scripts
 
-- `utils`: systematic file writing and processing.
+<details><summary>Detailed list</summary>
+    <ul>
+        <li>[utils](utils.py): file writing and processing.</li>
+        <li>[signal_related](signal_related.py): signal generation and modification.</li>
+    </ul>
+</details>
+
+
+
 - `signal_related`: signal generation and modification. 
 - `graph_related`: graph generation and modification.
 - `result_related`: metrics computation, processing and storage.
-- `custom_cost_functions`: cost function classes, from the [ruptures](https://centre-borelli.github.io/ruptures-docs/) BaseCost class. 
-- `numba_cost_functions`: [numba](https://numba.pydata.org/)-compatible implementations of the cost functions.
-- `running_cpd`: utils and dynamic programming implementation for CPD solving.
-- `rpy2_related`: utils and wrapping functions for the apllication of the Graph Lasso algorithm from [glasso](https://cran.r-project.org/web/packages/glasso/index.html) [[Friedman2008]](Friedman2008) and the [covcp](https://github.com/akopich/covcp) [[Avanesov2018]](#Avanesov2018) method based on the [rpy2](https://centre-borelli.github.io/ruptures-docs/) package.
+        - `custom_cost_functions`: cost function classes, from the [ruptures](https://centre-borelli.github.io/ruptures-docs/) BaseCost class. 
+        - `numba_cost_functions`: [numba](https://numba.pydata.org/)-compatible implementations of the cost functions.
+        - `running_cpd`: utils and dynamic programming implementation for CPD solving.
+        - `rpy2_related`: utils and wrapping functions for the apllication of the Graph Lasso algorithm from [glasso](https://cran.r-project.org/web/packages/glasso/index.html) [[Friedman2008]](Friedman2008) and the [covcp](https://github.com/akopich/covcp) [[Avanesov2018]](#Avanesov2018) method based on the [rpy2](https://centre-borelli.github.io/ruptures-docs/) package.
 
 ### Command Line scripts
 
