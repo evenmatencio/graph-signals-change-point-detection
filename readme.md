@@ -10,7 +10,7 @@ The repository is organized as follows:
 
 <details><summary>Detailed list</summary>
     <ul>
-        <li><a href='utils'>https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/utils.py: file writing and processing.</li>
+        <li><a href='https://github.com/evenmatencio/graph-signals-change-point-detection/blob/main/utils.py'>utils</a>: file writing and processing.</li>
         <li>[signal_related](signal_related.py): signal generation and modification.</li>
     </ul>
 </details>
